@@ -15,6 +15,16 @@ release!
 ##################
 
 
+** 01-27-98 RELEASE 0.06
+
+- Exceptional/fatal cases are ignored by default, but can be enabled
+with a command line switch (-f).
+
+- Fixed: C++ support and stats overlap.
+
+- Added a patch for Makefile.PLs.
+
+
 ** 01-20-98 RELEASE 0.05
 
 - Moved Test::Harness and Test to the ./maybe directory.  They are no

@@ -5,7 +5,7 @@ use Benchmark;
 use IO::File;
 use Getopt::Std;
 use File::stat;
-use vars qw($ME);
+use vars qw($ME %FATAL @FLOWSET);
 $ME = 'ccovinstrument';
 
 my $LIB;
@@ -18,7 +18,7 @@ my $LIB;
 die "CCov: can't find lib-files \@INC (".join(' ', @INC).")" if !$LIB;
 
 sub usage {
-    print "usage: $ME [-v] -c in.c [-o out.c] [-e errs]\n";
+    print "usage: $ME [-f] -c in.c [-o out.c] [-e errs]\n";
     print "       $ME -r\n";
     exit;
 }
@@ -49,8 +49,6 @@ if ($opt{'e'}) {
     open(STDERR, '>'.$opt{'e'}) or die "open $opt{'e'}: $!";
 }
 
-my $noise=$opt{'v'};
-
 package Chunk;
 
 sub new {
@@ -74,16 +72,21 @@ use vars qw/$CASE $err $toterr/;
 $CASE=0;
 $toterr=0;
 
-my @flowset = (qw(do while else return break continue goto switch exit),
-	       #perl
-	       qw(croak my_exit my_exit_jump DIE RETURN RETPUSHYES RETPUSHNO
-		  RETPUSHUNDEF RETURNOP));
-my @flowset2 = qw(if for);
+@FLOWSET = (qw(if for do while else return break continue goto switch exit),
+	    #XS
+	    qw(XSRETURN XSRETURN_EMPTY XSRETURN_UNDEF XSRETURN_YES XSRETURN_NO
+	      XSRETURN_PV XSRETURN_NV XSRETURN_IV),
+	    #perl
+	    qw(croak my_exit my_exit_jump DIE RETURN RETPUSHYES RETPUSHNO
+	       RETPUSHUNDEF RETURNOP));
+for (qw( exit croak my_exit my_exit_jump DIE )) {
+    $FATAL{$_} = 1;
+}
 my $detoothRE;
 my $cmtRE = '\/\* .*? \*\/';
 
 sub set_flow {
-    $detoothRE = ('('.join('|', @flowset, @flowset2).')');
+    $detoothRE = ('('.join('|', @FLOWSET).')');
 #    warn $detoothRE;
 }
 &set_flow;
@@ -131,13 +134,13 @@ sub highpass_filter {
 	    $newtext .= $s;
 	};
 	while (1) {
-#	    warn "[".substr($text, 0, 200)."]\n";
 	    my @at = cc_strstr($text, '\b'.$keyword.'\b');
 	    if (@at) {
 		$save->($at[0]);
 		$text = $at[1];
+#		warn "[".substr($text, 0, 200)."]\n";
 		if ($keyword ne 'else' and
-		    $text =~ s/^ ([\s\(] $keyword \s*) (?= \( ) //sx) {
+		    $text =~ s/^ ( $keyword \s*) (?= \( ) //sx) {
 		    $save->($1);
 		    my @m = extract_balanced($text, '()');
 		    if (!$m[0]) {
@@ -163,10 +166,10 @@ sub highpass_filter {
 			++$err;
 		    }
 
-		} elsif ($text =~ s/^ ([\s\(] else ) (?=\s+($cmtRE)?\s*if ) //sx) {
+		} elsif ($text =~ s/^ ( else ) (?=\s+($cmtRE)?\s*if ) //sx) {
 		    $save->( $1);
 		    next;
-		} elsif ($text =~ s/^ ([\s\(] else \s* ) //sx) {
+		} elsif ($text =~ s/^ ( else \s* ) //sx) {
 		    $save->($1);
 		    if ($text =~ m/^ \s* \{ /sx) {
 			next;
@@ -183,7 +186,7 @@ sub highpass_filter {
 			next;
 		    }
 
-		} elsif ($text =~ s/^ ( \s* $keyword ) //sx) {
+		} elsif ($text =~ s/^ ( $keyword ) //sx) {
 		    $save->($1);
 		    next;
 		} else {
@@ -221,9 +224,8 @@ sub block_tree {
 		my $prefix = $at[0];
 		$skipblock = 
 		    $prefix =~ m/ ( DEBUG [\w\s]* \( \s* | 
-				    \= \s+ |
-				    \b (struct|union|class) \s* |
-				    \b (struct|union|class) \s+ \w+ \s*
+				    \= \s* |
+				    \b (struct|union|class) \b [^;]*
 				  ) $/x;
 #		warn "***SKIP $prefix" if $skipblock;
 		$save->($prefix, $level > 1);
@@ -327,25 +329,32 @@ sub stmts {
 	}
 
 	# switch statements
-	$text =~ s/\b (case \s+ ( [\w]+ | \'.+?\' ) \s* \: |
+	$text =~ s/\b (case \s+ ( [\w:]+ | \'.+?\' ) \s* \: |
 		       default \s* \:)/$1.nextcase/gsex;
 
 	# before first flow keyword or at the end of block
 #	warn "--FLOWCHECK\n".substr($text, 0, 100)."\n";
 	my $at;
-	for my $kw (@flowset, @flowset2) {
+	my $isfatal;
+	for my $kw (@FLOWSET) {
 #	    warn $kw;
 	    my @m = cc_strstr($text, '\b'.$kw.'\b');
 	    next if !@m;
 #	    warn "--MATCH:\n".substr($m[1], 0, 50)."\n";
 	    if (!defined $at) {
+		$isfatal = $FATAL{$kw};
 		$at = length($m[0]);
 	    } else {
-		$at = length($m[0]) < $at ? length($m[0]) : $at;
+		if (length($m[0]) < $at) {
+		    $isfatal = $FATAL{$kw};
+		    $at = length($m[0]);
+		}
 	    }
 	}
 	if (defined $at) {
-	    substr($text,$at,0) = nextcase;
+	    if ($opt{'f'} or !$isfatal) {
+		substr($text,$at,0) = nextcase;
+	    }
 	} else {
 	    $text .= nextcase;
 	}
@@ -390,24 +399,32 @@ sub scan {
     while (defined(my $l = <$fh>)) {
 	++$line;
 	
-	if ($l =~ m, \/\*+ \s* (CCOV|CCov)\: \s* (.*?) \*+\/ ,x) {
+	if ($l =~ m{ \/\*+ \s* (CCOV|CCov) \s* \: \s* ( [^\*]* ) \*\/ }x) {
 	    
-	    my ($cmd, @args) = split(/\s+/, $1);
+	    my ($cmd, @args) = split(/\s+/, $2);
 	    if ($cmd =~ m/^off$/) {
-		die "Matching 'on' directive not found at $line in $name" 
-		    if !$st->{on};
-		do_swath($st);
-		
+		if ($st->{on}) {
+		    do_swath($st);
+		    $st->{on} = 0;
+		}
+			
 	    } elsif ($cmd =~ m/^on$/) {
+		warn "\n\$CCov: already on at line $line\n"
+		    if $st->{on};
 		$st->{on} = 1;
 		$st->{line} = $line+1;
 		
+	    } elsif ($cmd =~ m/^fatal$/) {
+		for (@args) { $FATAL{$_} = 1; }
+		push(@FLOWSET, @args);
+		&set_flow;
+
 	    } elsif ($cmd =~ m/^jump$/) {
-		push(@flowset, @args);
+		push(@FLOWSET, @args);
 		&set_flow;
 		
 	    } else {
-		warn "\n\$CCov: unknown command $cmd on line $line\n";
+		warn "\n\$CCov: unknown command '$cmd' on line $line\n";
 	    }
 	    print $l;
 	    next;
@@ -441,6 +458,7 @@ sub recorder {
     my $now = time;
     qq{
 /***************************************** CCOV FLIGHT RECORDER */
+#include <stdlib.h>
 #include <stdio.h>
 #define CCOV_BUILDSTAMP $now
 #define CCOV_MAXCASE $max
@@ -517,7 +535,8 @@ __END__
 =head1 SYNOPSIS
 
   ccovinstrument code.c > covcode.c
-  ccovinstrument code.c -o covcode.c [-e errs]
+  ccovinstrument code.c [-f] -o covcode.c [-e errs]
+     -f    instrument fatal code as well as normal code
 
 =head1 DESCRIPTION
 
@@ -562,11 +581,16 @@ analyze debugging code.
 
 Turns on coverage instrumentation.
 
-=item * /* CCov: jump myexit croak panic */
+=item * /* CCov: jump ZRETURN ZRETURN_YES */
 
-Adds to the list of functions that cause a change in execution flow.
-In addition to the usual keywords, macros used by the perl core are
-included by default.
+Adds to the list of identifiers that cause a change in execution flow.
+In addition to the usual keywords, macros used by the perl core and
+XSUBs are included by default.
+
+=item * /* CCov: fatal myexit croak panic */
+
+Adds to the list of identifiers that cause a fatal exception.
+Instrumentation of these blocks can be turned off.
 
 =back
 
@@ -593,6 +617,12 @@ The ?: operator is not checked.
 =back
 
 =head1 HOW DOES IT WORK?
+
+The instrumenter runs on source code before it is processed by the
+preprocessor (cpp).  Usually, you want to do test analysis on each
+library/application individually, rather than test new code and all
+the libraries you are using for each application.  So this feature
+helps you isolate source code for testing.
 
 The instrumentor does not really use a lexer (tokenizer).  The
 techniques are probably more similar to image processing than parsing.
@@ -625,15 +655,13 @@ The ccovanalyze database.  Defaults to './ccov.db'.
 =item * CCOV_VERBOSE
 
 Cause the instrumented binary to output to stderr complete coverage
-information upon exit.  (Not recommended.  Try ccovanalyze!)
+information upon exit.  (Not recommended.  Use ccovanalyze!)
 
 =back
 
 =head1 BUGS
 
-The code to infer where to add braces {} is horrible.
-
-C++ support untested & probably broken.
+?
 
 =head1 SEE ALSO
 

@@ -7,8 +7,7 @@ ccovanalyze
 ccovinstrument
 lib/Devel/CCov.pm
 lib/Devel/CCov/ccov_registry.c
-maybe/Harness.pm
-maybe/Test.pm
+patch/Makefile.PL
 patch/README
 patch/TEST.patch
-patch/makefile.patch
+patch/makeperl.patch

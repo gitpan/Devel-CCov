@@ -205,21 +205,32 @@ sub stats {
 		print "test set: ".join(' ', @tests)."\n";
 	    }
 	    my $overlap;
+	    my %zip;
+	    my %files;
 	    for my $test (@tests) {
 		my $t = $at->{$test};
-		for my $file (keys %$t) {
+		for (keys %$t) { $files{$_} = 1 }
+	    }
+	    for my $test (@tests) {
+		my $t = $at->{$test};
+		for my $file (keys %files) {
 		    my $f = $t->{$file};
-		    if (!$overlap->{$file}) {
+		    if (!$f) {
+			$zip{$file} = 1;
+		    } else {
+			if (!$overlap->{$file}) {
+			    my $v = new Bit::Vector($f->{max});
+			    $v->Complement($v->Shadow);
+			    $overlap->{$file} = $v;
+			}
 			my $v = new Bit::Vector($f->{max});
-			$v->Complement($v->Shadow);
-			$overlap->{$file} = $v;
+			$v->from_hex($f->{hits});
+			$overlap->{$file} &= $v;
 		    }
-		    my $v = new Bit::Vector($f->{max});
-		    $v->from_hex($f->{hits});
-		    $overlap->{$file} &= $v;
 		}
 	    }
 	    for my $file (sort keys %$overlap) {
+		next if $zip{$file};
 		my $v = $overlap->{$file};
 		my ($o1, $o2) = count_bits($v);
 		printf("%20s: %d (%d%%): ", $file, $o1, 100*$o1/($o1+$o2));

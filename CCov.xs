@@ -83,6 +83,7 @@ cc_exprstr(in_str, in_target)
 	  switch (state) {
 	  case 'r':
 	    if (at == '/' && at2 == '*') { state = 'c'; break; }
+	    if (at == '/' && at2 == '/') { state = 'C'; break; }
 	    if (at == '\'') { state = 'q'; break; }
 	    if (at == '"') { state = 'Q'; break; }
 	    if (at == '(') { ++plevel; break; }
@@ -100,7 +101,10 @@ cc_exprstr(in_str, in_target)
 	    }
 	    break;
 	  case 'c':
-	    if (at == '*' && at2 == '/') { ++pos; state = 'r'; break; }
+	    if (at == '*' && at2 == '/') { ++pos; state = 'r'; }
+	    break;
+	  case 'C':
+	    if (at == '\n') state = 'r';
 	    break;
 	  case 'q':
 	    if (at == '\\' && at2 == '\\') { ++pos; break; }
@@ -151,6 +155,7 @@ cc_strstr(in_str, in_target)
 	  switch (state) {
 	  case 'r':
 	    if (at == '/' && at2 == '*') { state = 'c'; break; }
+	    if (at == '/' && at2 == '/') { state = 'C'; break; }
 	    if (at == '\'') { state = 'q'; break; }
 	    if (at == '"') { state = 'Q'; break; }
 	    if (pos <= length - relen &&
@@ -167,6 +172,9 @@ cc_strstr(in_str, in_target)
 	    break;
 	  case 'c':
 	    if (at == '*' && at2 == '/') { ++pos; state = 'r'; break; }
+	    break;
+	  case 'C':
+	    if (at == '\n') state = 'r';
 	    break;
 	  case 'q':
 	    if (at == '\\' && at2 == '\\') { ++pos; break; }
@@ -240,11 +248,15 @@ extract_balanced(in_str, paren1)
 	    if (at == paren1) { ++opens; break; }
 	    if (at == paren2) { ++closes; break; }
 	    if (at == '/' && at2 == '*') { state = 'c'; break; }
+	    if (at == '/' && at2 == '/') { state = 'C'; break; }
 	    if (at == '\'') { state = 'q'; break; }
 	    if (at == '"') { state = 'Q'; break; }
 	    break;
 	  case 'c':
 	    if (at == '*' && at2 == '/') { ++pos; state = 'r'; break; }
+	    break;
+	  case 'C':
+	    if (at == '\n') state = 'r';
 	    break;
 	  case 'q':
 	    if (at == '\\' && at2 == '\\') { ++pos; break; }

@@ -1,8 +1,10 @@
+/* CCov: off */
+
 #include <sys/types.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <time.h>
-
-extern char *getenv(const char *name);
 
 typedef void (*CCOV_HITS_T)(int *hitp, int *maxp);
 typedef void (*CCOV_REPORT_T)(unsigned long build, char *testname, 

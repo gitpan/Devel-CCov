@@ -2,8 +2,6 @@
 
 do the reports really work as advertised?
 
-forbid && in if tests?
-
-add failok to the perl core TEST script?
+forbid && in 'if' tests?
 
 try running against Tree::Fat

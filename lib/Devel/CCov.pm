@@ -9,7 +9,7 @@ require AutoLoader;
 
 @ISA = qw(Exporter DynaLoader);
 @EXPORT_OK = qw(extract_balanced cc_strstr cc_exprstr $VERSION);
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 bootstrap Devel::CCov $VERSION;
 
