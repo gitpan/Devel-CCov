@@ -13,14 +13,14 @@ Devel::CCov    bdcO  Fun Test Coverage Analysis for C/C++         JPRIT
 Get it via http://www.perl.com/CPAN/authors/id/JPRIT/ !
 
 
-WARNING: As far as I know, this package works correctly.  However,
-don't make the mistake of considering it anything more than a beta
-release!
-
-
 ##################
 # RECENT CHAN@ES #
 ##################
+
+
+** 04-03-98 RELEASE 0.20
+
+- No changes.  Seems to work correctly.
 
 
 ** 01-18-98 RELEASE 0.07
