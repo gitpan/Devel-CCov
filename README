@@ -1,6 +1,9 @@
 Scans C/C++ source (before cpp) and inserts trip-wires in each code
-path to record execution.  Careful use of this tool can help you
-eliminate all bugs from your code.
+path to record execution.
+
+=> Requires no special compiler support.
+
+=> Careful use can help you eliminate _all_ bugs from your code.
 
 
 Name           DSLI  Description                                  Info

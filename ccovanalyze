@@ -42,6 +42,7 @@ pwd
 tm qw(34bbb8b8)    - translates hex times into local time
 
 load               - load new data from $LOG
+swapin             - load new data and cd to it
 stats [sub-report] - stats help for a listing
 
 copy               - copyright
@@ -131,6 +132,13 @@ sub checkpoint {
     store $TOP, "$DB.new";
     rename "$DB.new", $DB or warn "rename: $!";
     ()
+}
+
+sub swapin {
+    load();
+    my @b = sort keys %$TOP;
+    @PATH = ($b[$#b]);
+    ();
 }
 
 sub tm {

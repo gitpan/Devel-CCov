@@ -293,7 +293,7 @@ sub stmts {
 	my $where = "\n\$CCov: $line-$last:";
 	
 	if ($text =~ m/\# \s* (if \b | ifdef \b)/sx) {
-	    warn "$where Conditionals are difficult to parse; factor it?\n".substr($text, -200)."\n";
+	    warn "$where Conditionals can cause difficulty in parsing; factor it?\n".substr($text, -200)."\n";
 	    ++$err;
 	}
 	if ($text =~ m/ \s if \s* ( \( .* ) $/sx) {
