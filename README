@@ -15,6 +15,15 @@ release!
 ##################
 
 
+** 01-20-98 RELEASE 0.05
+
+- Moved Test::Harness and Test to the ./maybe directory.  They are no
+longer installed by default.
+
+- Fixed overlap report: sort by uniqueness instead of sameness &
+average by test, not by file.
+
+
 ** 01-13-98 RELEASE 0.04
 
 - General integration with Test::Harness.

@@ -243,7 +243,7 @@ sub stats {
 	    }
 	    $|=1;
 	    my $r;
-	    eval {   #for partial results :-)
+	    eval {   #eval for partial results :-)
 		for my $test (@tests) {
 		    my $targ = $at->{$test};
 		    my $tot_share=0;
@@ -270,7 +270,6 @@ sub stats {
 			    for (my $b=0; $b < $vshared->Size; $b++) {
 				++$share if $vshared->bit_test($b);
 			    }
-			    $count++;
 			    $tot_share += $share;
 
 			    $vtarg->Difference($vtarg, $v);
@@ -278,6 +277,7 @@ sub stats {
 				++$uniq if $vtarg->bit_test($b);
 			    }
 			}
+			$count++;
 		    }
 		    print "\n";
 		    $r->{$test}{test} = $test;
@@ -287,7 +287,7 @@ sub stats {
 	    };
 	    warn if $@;
 	    print "\nAverage number of cases (not) shared with other tests:\n";
-	    for my $z (sort { $a->{avg} <=> $b->{avg} } values %$r) {
+	    for my $z (sort { $a->{uniq} <=> $b->{uniq} } values %$r) {
 		printf("%20s: %f (%f)\n", $z->{test}, $z->{avg}, $z->{uniq});
 	    }
 	    print "Lower is better (higher is better): maximize orthogonality!\n";
@@ -362,7 +362,7 @@ sub stats {
 
 package main;
 
-require Devel::CCov;  #get $VERSION
+use Devel::CCov qw($VERSION);
 use IO::File;
 use Data::Dumper;
 use Carp;
@@ -396,8 +396,7 @@ sub resolve {
 
 sub run {
     my ($o) = @_;
-    my $ver = $Devel::CCov::VERSION || $Devel::CCov::VERSION; #avoid warning
-    print("CCov Analyzer $ver (Perl $])\n");
+    print("CCov Analyzer $VERSION (Perl $])\n");
 
     while (1) {
 	&notice_data;
