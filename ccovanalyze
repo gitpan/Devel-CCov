@@ -1,7 +1,7 @@
 #!/nw/dev/usr/bin/perl -w
 
 # This is like a mini-version of posh (Perl - ObjectStore Shell).
-# ObjectStore adds seemly, easy, database-strength persistence to
+# ObjectStore adds seemless, easy, database-strength persistence to
 # perl.  Check it out!  http://www.perl.com/CPAN/authors/id/JPRIT/
 
 # Too bad Storable can't store Bit::Vectors (or I couldn't figure it
@@ -83,6 +83,7 @@ sub load {
     my $fh = new IO::File;
     $fh->open($LOG) or die "open $LOG: $!";
     my $count=0;
+    my $buildcnt = keys %$TOP;
     while (defined(my $l=<$fh>)) {
 	my @l = split(/\s+/, $l);
 	my %d = map { split(/\=/, $_) } @l;
@@ -91,20 +92,33 @@ sub load {
 	my $t = $b->{ $d{test} } ||= {};
 	my $f = $t->{ $d{file} } ||= {};
 	if ($d{tm} gt ($f->{tm} or 0)) {
+	    if ($f->{tm}) {
+		# never loose ground on the same build
+		my $v1 = new Bit::Vector($f->{max});
+		$v1->from_hex($f->{hits});
+		my $v2 = new Bit::Vector($d{max});
+		$v2->from_hex($d{hits});
+		$v1 |= $v2;
+		$f->{hits} = $v1->to_Hex();
+	    } else {
+		$f->{max} = $d{max};
+		$f->{hits} = $d{hits};
+	    }
 	    $f->{tm} = $d{tm};
-	    $f->{max} = $d{max};
-	    $f->{hits} = $d{hits};
 	    ++$count;
 	}
     }
     $fh->close;
     unlink $LOG or warn "unlink $LOG: $!";
+    if ($buildcnt < keys %$TOP) {
+	warn "[** A NEW BUILD is available! **]\n";
+    }
     $count;
 }
 
 sub prune {
     my ($keep) = @_;
-    $keep ||= 3;
+    $keep ||= 4;
     my @b = sort keys %$TOP;
     for (1..$keep) { pop @b };
     for (@b) { delete $TOP->{$_}; }
@@ -113,7 +127,7 @@ sub prune {
 
 sub checkpoint {
     print "[checkpointing to $DB]\n";
-    prune(3);
+    prune();
     store $TOP, "$DB.new";
     rename "$DB.new", $DB or warn "rename: $!";
     ()

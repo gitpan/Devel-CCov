@@ -1,6 +1,7 @@
 # Something like this:
 
-my $ccov=1; #Devel::CCov
+my $ccov=1;
+push(@PREREQ, 'Devel::CCov' => 0.06) if $ccov;
 my @CCOV = $ccov? 'ccov_registry.o':'';
 
 sub MY::c_o {
@@ -18,7 +19,7 @@ sub MY::c_o {
 	    }
 	}
 	push(@rules, '
-ccov_registry$(OBJ_EXT):
+ccov_registry$(OBJ_EXT): .ccov-timestamp
 	ccovinstrument -r
 	$(CCCMD) $(CCCDLFLAGS) $*.c
 ');

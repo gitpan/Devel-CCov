@@ -1,12 +1,17 @@
+Scans C/C++ source (before cpp) and inserts trip-wires in each code
+path to record execution.  Careful use of this tool can help you
+eliminate all bugs from your code.
+
+
 Name           DSLI  Description                                  Info
 -----------    ----  -------------------------------------------- -----
-Devel::CCov    adcO  Test Coverage Analysis for C/C++             JPRIT
+Devel::CCov    bdcO  Fun Test Coverage Analysis for C/C++         JPRIT
 
 Get it via http://www.perl.com/CPAN/authors/id/JPRIT/ !
 
 
 WARNING: As far as I know, this package works correctly.  However,
-don't make the mistake of considering it anything more than an alpha
+don't make the mistake of considering it anything more than a beta
 release!
 
 
@@ -15,40 +20,23 @@ release!
 ##################
 
 
-** 01-27-98 RELEASE 0.06
+** 01-18-98 RELEASE 0.07
+
+- Minor tweaks.
+
+- Switch statements are instrumented with less overkill when possible.
+
+- Fixed release dates time-warp.
+
+
+** 01-17-98 RELEASE 0.06
 
 - Exceptional/fatal cases are ignored by default, but can be enabled
 with a command line switch (-f).
 
-- Fixed: C++ support and stats overlap.
+- Fixed C++ support and stats overlap.
 
 - Added a patch for Makefile.PLs.
-
-
-** 01-20-98 RELEASE 0.05
-
-- Moved Test::Harness and Test to the ./maybe directory.  They are no
-longer installed by default.
-
-- Fixed overlap report: sort by uniqueness instead of sameness &
-average by test, not by file.
-
-
-** 01-13-98 RELEASE 0.04
-
-- General integration with Test::Harness.
-
-- Initially targeted at the perl core.  See the ./patch directory.
-
-- Coverage analyzer is housed within an interactive perl shell.
-
-- Test::Harness: added a new category of tests.  A test script can
-output a list of tests that it expects will fail.  If these tests
-fail, they will be accepted as 'ok'.  The twist is that if they
-succeed, they are listed under a new 'bonus' category.  (I.e. Known
-bugs :-)
-
-- Test.pm: A simple module to make writing tests a little easier.
 
 
 -------------------------------------------------------------------
