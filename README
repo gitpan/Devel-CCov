@@ -1,0 +1,41 @@
+Name           DSLI  Description                                  Info
+-----------    ----  -------------------------------------------- -----
+Devel::CCov    adcO  Test Coverage Analysis for C/C++             JPRIT
+
+Get it via http://www.perl.com/CPAN/authors/id/JPRIT/ !
+
+
+WARNING: As far as I know, this package works correctly.  However,
+don't make the mistake of considering it anything more than an alpha
+release!
+
+
+##################
+# RECENT CHAN@ES #
+##################
+
+
+** 01-13-98 RELEASE 0.04
+
+- General integration with Test::Harness.
+
+- Initially targeted at the perl core.  See the ./patch directory.
+
+- Coverage analyzer is housed within an interactive perl shell.
+
+- Test::Harness: added a new category of tests.  A test script can
+output a list of tests that it expects will fail.  If these tests
+fail, they will be accepted as 'ok'.  The twist is that if they
+succeed, they are listed under a new 'bonus' category.  (I.e. Known
+bugs :-)
+
+- Test.pm: A simple module to make writing tests a little easier.
+
+
+-------------------------------------------------------------------
+Copyright © 1998 Joshua Nathaniel Pritikin.  All rights reserved.
+
+This package is free software and is provided "as is" without express
+or implied warranty.  It may be used, redistributed and/or modified
+under the terms of the Perl Artistic License (see
+http://www.perl.com/perl/misc/Artistic.html)

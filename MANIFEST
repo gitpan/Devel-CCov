@@ -1,0 +1,14 @@
+CCov.xs
+MANIFEST
+Makefile.PL
+README
+TODO
+ccovanalyze
+ccovinstrument
+lib/Devel/CCov.pm
+lib/Devel/CCov/ccov_registry.c
+lib/Test.pm
+lib/Test/Harness.pm
+patch/README
+patch/TEST.patch
+patch/makefile.patch
